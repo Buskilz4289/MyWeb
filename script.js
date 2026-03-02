@@ -307,22 +307,29 @@
   if (editToggle) {
     editToggle.addEventListener('click', function () {
       document.body.classList.toggle('edit-mode');
-      editToggle.textContent = document.body.classList.contains('edit-mode') ? 'סיום עריכה' : '✎ ערוך';
+      editToggle.classList.toggle('is-active', document.body.classList.contains('edit-mode'));
+      editToggle.setAttribute('title', document.body.classList.contains('edit-mode') ? 'סיום עריכה' : 'ערוך קישורים');
     });
   }
 
-  qsAll('.links-section__add').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var catId = btn.getAttribute('data-category-id');
-      if (!catId) return;
-      $('add-link-category').value = catId;
-      var modal = $('add-link-modal');
-      var titleInput = $('add-link-title');
-      var urlInput = $('add-link-url');
-      if (titleInput) titleInput.value = '';
-      if (urlInput) urlInput.value = '';
-      if (modal) { modal.hidden = false; if (titleInput) titleInput.focus(); }
-    });
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.links-section__add');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var catId = btn.getAttribute('data-category-id');
+    if (!catId) return;
+    var catInput = $('add-link-category');
+    if (catInput) catInput.value = catId;
+    var modal = $('add-link-modal');
+    var titleInput = $('add-link-title');
+    var urlInput = $('add-link-url');
+    if (titleInput) titleInput.value = '';
+    if (urlInput) urlInput.value = '';
+    if (modal) {
+      modal.removeAttribute('hidden');
+      if (titleInput) { titleInput.focus(); }
+    }
   });
 
   var addLinkModal = $('add-link-modal');
