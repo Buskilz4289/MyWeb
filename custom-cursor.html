@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Cursor — Glassmorphism Demo</title>
+  <style>
+    /* ========== CUSTOM CURSOR ========== */
+    .custom-cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      left: 0;
+      top: 0;
+      border-radius: 50%;
+      border: 2px solid #00eaff;
+      background: transparent;
+      box-shadow: 0 0 10px #00eaff, 0 0 20px rgba(0, 234, 255, 0.4);
+      pointer-events: none;
+      mix-blend-mode: difference;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s ease-out, border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+      will-change: transform;
+    }
+    .custom-cursor.hover {
+      transform: translate(-50%, -50%) scale(1.8);
+      border-color: #fff;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.9), 0 0 32px rgba(255, 255, 255, 0.5);
+    }
+    body.custom-cursor-active { cursor: none; }
+    body.custom-cursor-active * { cursor: none; }
+
+    /* ========== DEMO UI ========== */
+    .demo {
+      min-height: 100vh;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      color: #e0e0e0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 480px;
+    }
+    .card:hover { box-shadow: 0 0 30px rgba(0, 234, 255, 0.15); }
+    .glass h1, .glass h2 { margin: 0 0 0.75rem; font-weight: 600; color: #fff; }
+    .glass p { margin: 0 0 1rem; line-height: 1.6; color: rgba(255, 255, 255, 0.8); }
+    .glass code { background: rgba(0, 0, 0, 0.3); padding: 0.15em 0.4em; border-radius: 6px; font-size: 0.9em; }
+    .glass-btn {
+      display: inline-block;
+      margin-right: 0.75rem;
+      margin-top: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(0, 234, 255, 0.15);
+      border: 1px solid rgba(0, 234, 255, 0.4);
+      border-radius: 10px;
+      color: #00eaff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      cursor: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .glass-btn:hover { background: rgba(0, 234, 255, 0.25); border-color: #00eaff; }
+  </style>
+</head>
+<body>
+  <div id="custom-cursor" class="custom-cursor" aria-hidden="true"></div>
+
+  <main class="demo">
+    <section class="glass card">
+      <h1>Custom Cursor</h1>
+      <p>Move over links and buttons to see the cursor grow and glow.</p>
+      <a href="#!" class="glass-btn">Link example</a>
+      <button type="button" class="glass-btn">Button</button>
+    </section>
+    <section class="glass card">
+      <h2>Cards are hover targets</h2>
+      <p>Any <code>.card</code>, <code>a</code>, or <code>button</code> triggers the hover state.</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var CURSOR_SELECTOR = 'a, button, .card';
+      var INERTIA = 0.18;
+
+      function isTouchDevice() {
+        return 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+      }
+      if (isTouchDevice()) return;
+
+      var cursor = document.getElementById('custom-cursor');
+      if (!cursor) return;
+
+      document.body.classList.add('custom-cursor-active');
+
+      var targetX = 0, targetY = 0;
+      var currentX = -999, currentY = -999;
+      var rafId = null;
+      var hasMoved = false;
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function updatePosition() {
+        if (!hasMoved) return;
+        currentX = lerp(currentX, targetX, INERTIA);
+        currentY = lerp(currentY, targetY, INERTIA);
+        cursor.style.left = currentX + 'px';
+        cursor.style.top = currentY + 'px';
+        rafId = requestAnimationFrame(updatePosition);
+      }
+
+      document.addEventListener('mousemove', function (e) {
+        targetX = e.clientX;
+        targetY = e.clientY;
+        if (!hasMoved) {
+          hasMoved = true;
+          currentX = targetX;
+          currentY = targetY;
+          cursor.style.left = currentX + 'px';
+          cursor.style.top = currentY + 'px';
+        }
+        if (rafId === null) rafId = requestAnimationFrame(updatePosition);
+      }, { passive: true });
+
+      document.addEventListener('mouseover', function (e) {
+        cursor.classList.toggle('hover', !!e.target.closest(CURSOR_SELECTOR));
+      });
+      document.addEventListener('mouseout', function (e) {
+        var related = e.relatedTarget;
+        if (!related || !related.closest) {
+          cursor.classList.remove('hover');
+          return;
+        }
+        cursor.classList.toggle('hover', !!related.closest(CURSOR_SELECTOR));
+      });
+    })();
+  </script>
+</body>
+</html>

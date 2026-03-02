@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>אתר של שחף</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-image" id="bg-image" aria-hidden="true"></div>
+  <div class="online-indicator" id="online-indicator" title="מחובר לאינטרנט"></div>
+
+  <header class="header">
+    <div class="header__row">
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="תפריט">☰</button>
+      <h1 class="header__title" id="header-greeting">שלום שחף</h1>
+      <div class="header__meta">
+        <div class="header__datetime">
+          <span id="current-date"></span>
+          <span id="current-time"></span>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="מצב כהה/בהיר">🌙</button>
+      </div>
+    </div>
+    <p class="header__subtitle">הקישורים שלך במקום אחד</p>
+    <div class="search-wrap">
+      <input type="search" class="search-input" id="search-input" placeholder="חיפוש קישורים..." autocomplete="off" aria-label="חיפוש קישורים">
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="sidebar__backdrop" id="sidebar-backdrop"></div>
+    <div class="sidebar__panel">
+      <button type="button" class="sidebar__close" id="sidebar-close" aria-label="סגור">×</button>
+      <h2 class="sidebar__title">קטגוריות</h2>
+      <ul class="sidebar__nav" id="sidebar-nav">
+        <li><a href="#cat-news">חדשות</a></li>
+        <li><a href="#cat-entertainment">בידור</a></li>
+        <li><a href="#cat-ai">בינה מלאכותית</a></li>
+        <li><a href="#cat-tools">כלים</a></li>
+        <li><a href="#cat-sports">ספורט</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="widgets-bar">
+    <div class="widget widget--quote">
+      <span class="widget__label">ציטוט יומי</span>
+      <p class="widget-quote__text" id="quote-text"></p>
+    </div>
+    <div class="widget widget--weather">
+      <span class="widget__label">מזג אוויר</span>
+      <p class="widget-weather__text" id="weather-text">טוען…</p>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <aside class="news-panel">
+      <div class="news-panel__head">
+        <h2 class="news-panel__title">חדשות רצות</h2>
+        <div class="news-panel__actions">
+          <button type="button" class="news-refresh" id="news-refresh" aria-label="רענן חדשות" title="רענן">↻</button>
+          <button type="button" class="news-toggle" id="news-toggle" aria-label="הרחב/צמצם">−</button>
+        </div>
+      </div>
+      <div class="news-panel__body" id="news-panel-body">
+        <div class="news-panel__track" id="news-track">
+          <ul class="news-panel__list" id="news-list"></ul>
+          <ul class="news-panel__list news-panel__list--dup" id="news-list-dup" aria-hidden="true"></ul>
+        </div>
+        <p class="news-panel__loading" id="news-loading">טוען חדשות…</p>
+        <p class="news-panel__error" id="news-error" hidden>לא ניתן לטעון חדשות. <button type="button" class="news-panel__retry" id="news-retry">נסה שוב</button></p>
+      </div>
+    </aside>
+
+    <main class="main" id="categories-container">
+      <section class="links-section" id="cat-news" data-category-id="news">
+        <h3 class="links-section__head">📰 חדשות</h3>
+        <div class="links-section__list">
+          <article class="link-card" data-url="https://www.ynet.co.il" data-title="ynet" data-search="ynet ידיעות">
+            <a href="https://www.ynet.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+              <span class="link-card__title">ynet</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.walla.co.il" data-title="וואלה!" data-search="וואלה">
+            <a href="https://www.walla.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">וואלה!</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.maariv.co.il" data-title="מעריב" data-search="מעריב">
+            <a href="https://www.maariv.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">מעריב</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.haaretz.co.il" data-title="הארץ" data-search="הארץ">
+            <a href="https://www.haaretz.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">הארץ</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.mako.co.il" data-title="mako" data-search="mako">
+            <a href="https://www.mako.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">mako</span>
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="links-section" id="cat-entertainment" data-category-id="entertainment">
+        <h3 class="links-section__head">🎬 בידור</h3>
+        <div class="links-section__list">
+          <article class="link-card" data-url="https://www.youtube.com" data-title="YouTube" data-search="youtube יוטיוב">
+            <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></span>
+              <span class="link-card__title">YouTube</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.netflix.com" data-title="Netflix" data-search="netflix נטפליקס">
+            <a href="https://www.netflix.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M5.398 0v.24h3.083V24h4.412V.24h3.083V0H5.398z"/></svg></span>
+              <span class="link-card__title">Netflix</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.spotify.com" data-title="Spotify" data-search="spotify ספוטיפיי">
+            <a href="https://www.spotify.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0z"/></svg></span>
+              <span class="link-card__title">Spotify</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.instagram.com" data-title="Instagram" data-search="instagram אינסטגרם">
+            <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Instagram</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.twitch.tv" data-title="Twitch" data-search="twitch טוויץ">
+            <a href="https://www.twitch.tv" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></span>
+              <span class="link-card__title">Twitch</span>
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="links-section" id="cat-ai" data-category-id="ai">
+        <h3 class="links-section__head">🤖 בינה מלאכותית</h3>
+        <div class="links-section__list">
+          <article class="link-card" data-url="https://chat.openai.com" data-title="ChatGPT" data-search="chatgpt צ'אט ג'יפיטי">
+            <a href="https://chat.openai.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></span>
+              <span class="link-card__title">ChatGPT</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://claude.ai" data-title="Claude" data-search="claude קלוד">
+            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Claude</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.perplexity.ai" data-title="Perplexity" data-search="perplexity">
+            <a href="https://www.perplexity.ai" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Perplexity</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://gemini.google.com" data-title="Google Gemini" data-search="gemini גוגל">
+            <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Google Gemini</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://copilot.microsoft.com" data-title="Microsoft Copilot" data-search="copilot מיקרוסופט">
+            <a href="https://copilot.microsoft.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Microsoft Copilot</span>
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="links-section" id="cat-tools" data-category-id="tools">
+        <h3 class="links-section__head">🔧 כלים</h3>
+        <div class="links-section__list">
+          <article class="link-card" data-url="https://github.com" data-title="GitHub" data-search="github גיטהאב">
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></span>
+              <span class="link-card__title">GitHub</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://stackoverflow.com" data-title="Stack Overflow" data-search="stack overflow">
+            <a href="https://stackoverflow.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M15.21 17.34v2.62h4.69v-2.62h-4.69zm-1.22-3.03l2.04-.58.62 2.15-2.04.58-.62-2.15z"/></svg></span>
+              <span class="link-card__title">Stack Overflow</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://translate.google.com" data-title="Google Translate" data-search="תרגום גוגל">
+            <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h2.14c.25.52.53 1.03.85 1.5.24.35.5.68.78 1 1.28 1.28 2.73 2.41 4.31 3.34l-1.21 1.21 1.42 1.41 2.22-2.22zm-2.5-5.07c.5-.5 1-1.02 1.45-1.55-.96 1.03-1.87 2.11-2.8 3.21l1.35 1.34zM5.5 4A2.5 2.5 0 003 6.5V8h2V6.5c0-.28.22-.5.5-.5h2.02l.16-1.36A2.5 2.5 0 005.5 4z"/></svg></span>
+              <span class="link-card__title">Google Translate</span>
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="links-section" id="cat-sports" data-category-id="sports">
+        <h3 class="links-section__head">⚽ ספורט</h3>
+        <div class="links-section__list">
+          <article class="link-card" data-url="https://www.one.co.il" data-title="ONE" data-search="one ספורט">
+            <a href="https://www.one.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></span>
+              <span class="link-card__title">ONE</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.sport5.co.il" data-title="ספורט5" data-search="ספורט5">
+            <a href="https://www.sport5.co.il" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">ספורט5</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.espn.com" data-title="ESPN" data-search="espn ספורט">
+            <a href="https://www.espn.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></span>
+              <span class="link-card__title">ESPN</span>
+            </a>
+          </article>
+          <article class="link-card" data-url="https://www.goal.com" data-title="Goal" data-search="goal גול">
+            <a href="https://www.goal.com" target="_blank" rel="noopener noreferrer" class="link-card__link">
+              <span class="link-card__icon"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+              <span class="link-card__title">Goal</span>
+            </a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <aside class="notes-panel">
+      <div class="notes-panel__head">
+        <h2 class="notes-panel__title">הערות</h2>
+        <button type="button" class="notes-toggle" id="notes-toggle" aria-label="הרחב/צמצם">−</button>
+      </div>
+      <div class="notes-panel__body" id="notes-panel-body">
+        <textarea class="notes-panel__textarea" id="notes-textarea" placeholder="כתוב כאן הערות לעצמך..." rows="6"></textarea>
+      </div>
+    </aside>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
