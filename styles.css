@@ -659,6 +659,165 @@ body.page-loaded {
 
 .link-card__title { white-space: nowrap; }
 
+.links-section__head-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.links-section__add {
+  display: none;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--accent);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+body.edit-mode .links-section__add { display: inline-flex; }
+
+.links-section__add:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--accent);
+}
+
+.link-card__delete {
+  display: none;
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text);
+  background: rgba(0,0,0,0.4);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s, color 0.2s;
+}
+
+body.edit-mode .link-card__delete { display: flex; align-items: center; justify-content: center; }
+
+.link-card__delete:hover { background: #ef4444; color: #fff; }
+
+body.edit-mode .link-card { cursor: grab; }
+body.edit-mode .link-card:active { cursor: grabbing; }
+body.edit-mode .link-card__link { pointer-events: none; }
+body.edit-mode .link-card__delete { pointer-events: auto; }
+
+.edit-toggle {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.edit-toggle:hover { border-color: var(--accent); }
+
+/* ========== MODAL ========== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal[hidden] { display: none; }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+
+.modal__box {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 1.5rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+.modal__title {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.modal__form { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.modal__label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.modal__input {
+  padding: 0.6rem 0.85rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+}
+
+.modal__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  justify-content: flex-end;
+}
+
+.modal__btn {
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.modal__btn--cancel {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: var(--glass-border);
+}
+
+.modal__btn--submit {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.modal__btn--submit:hover { filter: brightness(1.1); }
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 640px) {
   .header__meta { width: 100%; justify-content: center; }

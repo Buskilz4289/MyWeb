@@ -3,9 +3,12 @@
 
   var STORAGE_THEME = 'dashboard-theme';
   var STORAGE_ORDER = 'dashboard-category-order';
+  var STORAGE_LINKS = 'dashboard-links';
   var STORAGE_NEWS_COLLAPSED = 'dashboard-news-collapsed';
   var STORAGE_NOTES = 'dashboard-notes';
   var STORAGE_NOTES_COLLAPSED = 'dashboard-notes-collapsed';
+
+  var DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
 
   function $(id) { return document.getElementById(id); }
   function qs(sel, el) { return (el || document).querySelector(sel); }
@@ -165,6 +168,189 @@
       });
     });
   }
+
+  // ---------- עריכת קישורים אונליין: הוספה, מחיקה, שינוי סדר ----------
+  function getLinksFromDom() {
+    var data = {};
+    qsAll('.links-section[data-category-id]').forEach(function (section) {
+      var catId = section.getAttribute('data-category-id');
+      if (!catId) return;
+      var list = section.querySelector('.links-section__list');
+      if (!list) return;
+      var links = [];
+      qsAll('.link-card', list).forEach(function (card) {
+        var a = card.querySelector('.link-card__link');
+        var url = card.getAttribute('data-url') || (a ? a.getAttribute('href') : '') || '';
+        var title = card.getAttribute('data-title') || (a ? (a.querySelector('.link-card__title') || {}).textContent : '') || '';
+        var search = card.getAttribute('data-search') || title;
+        if (url) links.push({ url: url, title: title.trim(), search: (search || title).trim() });
+      });
+      data[catId] = links;
+    });
+    return data;
+  }
+
+  function loadLinks() {
+    try {
+      var raw = localStorage.getItem(STORAGE_LINKS);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    var fromDom = getLinksFromDom();
+    saveLinks(fromDom);
+    return fromDom;
+  }
+
+  function saveLinks(data) {
+    try { localStorage.setItem(STORAGE_LINKS, JSON.stringify(data)); } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderLinks(data) {
+    if (!data) return;
+    qsAll('.links-section[data-category-id]').forEach(function (section) {
+      var catId = section.getAttribute('data-category-id');
+      var list = section.querySelector('.links-section__list');
+      if (!list || !data[catId]) return;
+      var html = '';
+      data[catId].forEach(function (link) {
+        var url = escapeHtml(link.url);
+        var title = escapeHtml(link.title);
+        var search = escapeHtml(link.search || link.title);
+        html += '<article class="link-card" data-url="' + url + '" data-title="' + title + '" data-search="' + search + '">';
+        html += '<button type="button" class="link-card__delete" aria-label="מחק">×</button>';
+        html += '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="link-card__link">';
+        html += '<span class="link-card__icon">' + DEFAULT_ICON + '</span>';
+        html += '<span class="link-card__title">' + title + '</span></a></article>';
+      });
+      list.innerHTML = html;
+    });
+    attachLinksEditorEvents();
+  }
+
+  function attachLinksEditorEvents() {
+    var container = $('categories-container');
+    if (!container) return;
+
+    qsAll('.links-section__list', container).forEach(function (list) {
+      var section = list.closest('.links-section');
+      var catId = section ? section.getAttribute('data-category-id') : null;
+      if (!catId) return;
+
+      list.addEventListener('click', function (e) {
+        var del = e.target.closest('.link-card__delete');
+        if (!del) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var card = del.closest('.link-card');
+        if (!card) return;
+        var url = card.getAttribute('data-url');
+        var data = loadLinks();
+        if (!data[catId]) return;
+        data[catId] = data[catId].filter(function (l) { return l.url !== url; });
+        saveLinks(data);
+        renderLinks(data);
+      });
+
+      qsAll('.link-card', list).forEach(function (card) {
+        card._dragDone = false;
+        card.addEventListener('mousedown', function (e) {
+          if (!document.body.classList.contains('edit-mode')) return;
+          if (e.target.closest('.link-card__delete')) return;
+          if (e.button !== 0) return;
+          e.preventDefault();
+          var rect = card.getBoundingClientRect();
+          var shiftY = e.clientY - rect.top;
+          var listRect = list.getBoundingClientRect();
+          function move(ev) {
+            var y = ev.clientY - shiftY;
+            var next = null;
+            [].slice.call(list.children).forEach(function (c) {
+              if (c === card) return;
+              var r = c.getBoundingClientRect();
+              if (y < r.top + r.height / 2) { next = c; return false; }
+            });
+            if (next) list.insertBefore(card, next);
+            else list.appendChild(card);
+          }
+          function up() {
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+            card._dragDone = true;
+            var newOrder = [];
+            qsAll('.link-card', list).forEach(function (c) {
+              newOrder.push({
+                url: c.getAttribute('data-url'),
+                title: c.getAttribute('data-title'),
+                search: c.getAttribute('data-search') || c.getAttribute('data-title')
+              });
+            });
+            var data = loadLinks();
+            if (data[catId]) { data[catId] = newOrder; saveLinks(data); }
+          }
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
+        });
+      });
+    });
+  }
+
+  var editToggle = $('edit-toggle');
+  if (editToggle) {
+    editToggle.addEventListener('click', function () {
+      document.body.classList.toggle('edit-mode');
+      editToggle.textContent = document.body.classList.contains('edit-mode') ? 'סיום עריכה' : '✎ ערוך';
+    });
+  }
+
+  qsAll('.links-section__add').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var catId = btn.getAttribute('data-category-id');
+      if (!catId) return;
+      $('add-link-category').value = catId;
+      var modal = $('add-link-modal');
+      var titleInput = $('add-link-title');
+      var urlInput = $('add-link-url');
+      if (titleInput) titleInput.value = '';
+      if (urlInput) urlInput.value = '';
+      if (modal) { modal.hidden = false; if (titleInput) titleInput.focus(); }
+    });
+  });
+
+  var addLinkModal = $('add-link-modal');
+  var addLinkForm = $('add-link-form');
+  var addLinkCategory = $('add-link-category');
+  if (addLinkForm && addLinkCategory) {
+    addLinkForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var title = ($('add-link-title') || {}).value;
+      var url = ($('add-link-url') || {}).value;
+      var catId = addLinkCategory.value;
+      if (!title || !url || !catId) return;
+      if (!url.match(/^https?:\/\//i)) url = 'https://' + url;
+      var data = loadLinks();
+      if (!data[catId]) data[catId] = [];
+      data[catId].push({ url: url, title: title.trim(), search: title.trim() });
+      saveLinks(data);
+      renderLinks(data);
+      addLinkModal.hidden = true;
+    });
+  }
+  if ($('modal-cancel')) $('modal-cancel').addEventListener('click', function () { addLinkModal.hidden = true; });
+  if ($('modal-backdrop')) $('modal-backdrop').addEventListener('click', function () { addLinkModal.hidden = true; });
+
+  (function initLinks() {
+    var data = loadLinks();
+    renderLinks(data);
+  })();
 
   // ---------- News panel ----------
   var RSS_URL = 'https://news.google.com/rss?hl=he&gl=IL&ceid=IL:he';
