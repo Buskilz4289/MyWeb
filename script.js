@@ -8,6 +8,7 @@
   var STORAGE_NOTES = 'dashboard-notes';
   var STORAGE_NOTES_COLLAPSED = 'dashboard-notes-collapsed';
   var STORAGE_WEATHER_LOCATION = 'dashboard-weather-location';
+  var STORAGE_FOOTBALL_API_TOKEN = 'dashboard-football-api-token';
 
   var DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
 
@@ -530,13 +531,14 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט: דפדוף בין ימים, רק כדורגל וכדורסל (TheSportsDB eventsday – יותר משחקים) ----------
+  // ---------- משחקי ספורט: football-data.org (אנגליה, ספרד, איטליה, גרמניה, ישראל) + fallback TheSportsDB ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
   var sportsDateLabel = $('sports-date-label');
   var sportsPrevBtn = $('sports-prev-day');
   var sportsNextBtn = $('sports-next-day');
+  var sportsTokenBtn = $('sports-token-btn');
   var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
   var ALLOWED_SPORTS = ['Soccer', 'Basketball'];
   if (sportsList) {
@@ -565,68 +567,114 @@
       if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
       sportsList.innerHTML = '';
     }
-    function sportLabel(s) {
-      if (!s) return '';
-      if (s === 'Soccer' || s === 'Football') return 'כדורגל';
-      if (s === 'Basketball') return 'כדורסל';
-      return s;
+    function renderFootballDataMatches(matches) {
+      if (sportsLoading) sportsLoading.hidden = true;
+      if (sportsError) sportsError.hidden = true;
+      sportsList.innerHTML = '';
+      (matches || []).slice(0, 30).forEach(function (m) {
+        var comp = (m.competition && m.competition.name) ? m.competition.name : '';
+        var home = (m.homeTeam && m.homeTeam.name) ? m.homeTeam.name : '';
+        var away = (m.awayTeam && m.awayTeam.name) ? m.awayTeam.name : '';
+        var match = home && away ? home + ' – ' + away : '';
+        if (!match) return;
+        var timeStr = '';
+        if (m.utcDate) {
+          var dt = new Date(m.utcDate);
+          timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        }
+        var html = '<li class="sports-panel__item">';
+        html += '<span class="sports-panel__league">' + escapeHtml(comp) + '</span>';
+        html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+        if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+        html += '</li>';
+        sportsList.insertAdjacentHTML('beforeend', html);
+      });
     }
     function fetchSports(d) {
       if (!d) d = sportsViewDate;
-      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      var proxyIndex = 0;
-      function tryFetch() {
-        if (proxyIndex >= SPORTS_PROXIES.length) {
-          showSportsError();
-          return;
-        }
-        var url = SPORTS_PROXIES[proxyIndex] + encodeURIComponent(apiUrl);
-        var controller = new AbortController();
-        var timeout = setTimeout(function () { controller.abort(); }, 12000);
-        fetch(url, { signal: controller.signal })
-          .then(function (r) { clearTimeout(timeout); return r.text(); })
-          .then(function (text) {
-            var data;
-            try { data = JSON.parse(text); } catch (e) { proxyIndex++; tryFetch(); return; }
-            if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
-            var raw = (data && data.events) ? data.events : [];
-            var events = raw.filter(function (ev) {
-              var sport = (ev.strSport || '').trim();
-              return ALLOWED_SPORTS.indexOf(sport) !== -1;
-            });
-            if (events.length === 0) {
-              if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+      var token = '';
+      try { token = localStorage.getItem(STORAGE_FOOTBALL_API_TOKEN) || ''; } catch (e) {}
+      if (token) {
+        var fdUrl = 'https://api.football-data.org/v4/matches?dateFrom=' + d + '&dateTo=' + d;
+        fetch(fdUrl, { headers: { 'X-Auth-Token': token } })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.matches && data.matches.length > 0) {
+              renderFootballDataMatches(data.matches);
               return;
             }
-            if (sportsError) sportsError.hidden = true;
-            events.slice(0, 25).forEach(function (ev) {
-              var sport = sportLabel((ev.strSport || '').trim());
-              var home = (ev.strHomeTeam || '').trim();
-              var away = (ev.strAwayTeam || '').trim();
-              var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away).trim();
-              var time = (ev.strTime || '').trim();
-              var channel = (ev.strChannel || '').trim();
-              var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
-              if (!match) return;
-              var html = '<li class="sports-panel__item">';
-              html += '<span class="sports-panel__league">' + escapeHtml(ev.strLeague ? ev.strLeague : sport) + '</span>';
-              html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
-              if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
-              if (channel) html += '<span class="sports-panel__channel">' + escapeHtml(channel) + '</span>';
-              html += '</li>';
-              sportsList.insertAdjacentHTML('beforeend', html);
-            });
+            tryTheSportsDB();
           })
-          .catch(function () {
-            clearTimeout(timeout);
-            proxyIndex++;
-            tryFetch();
-          });
+          .catch(function () { tryTheSportsDB(); });
+      } else {
+        tryTheSportsDB();
       }
-      tryFetch();
+      function tryTheSportsDB() {
+        var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
+        var proxyIndex = 0;
+        function tryFetch() {
+          if (proxyIndex >= SPORTS_PROXIES.length) {
+            showSportsError();
+            return;
+          }
+          var url = SPORTS_PROXIES[proxyIndex] + encodeURIComponent(apiUrl);
+          var controller = new AbortController();
+          var timeout = setTimeout(function () { controller.abort(); }, 12000);
+          fetch(url, { signal: controller.signal })
+            .then(function (r) { clearTimeout(timeout); return r.text(); })
+            .then(function (text) {
+              var data;
+              try { data = JSON.parse(text); } catch (e) { proxyIndex++; tryFetch(); return; }
+              if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
+              var raw = (data && data.events) ? data.events : [];
+              var events = raw.filter(function (ev) {
+                var sport = (ev.strSport || '').trim();
+                return ALLOWED_SPORTS.indexOf(sport) !== -1;
+              });
+              if (events.length === 0) {
+                if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+                return;
+              }
+              if (sportsError) sportsError.hidden = true;
+              events.slice(0, 25).forEach(function (ev) {
+                var home = (ev.strHomeTeam || '').trim();
+                var away = (ev.strAwayTeam || '').trim();
+                var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away).trim();
+                var time = (ev.strTime || '').trim();
+                var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
+                if (!match) return;
+                var html = '<li class="sports-panel__item">';
+                html += '<span class="sports-panel__league">' + escapeHtml(ev.strLeague || '') + '</span>';
+                html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+                if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+                html += '</li>';
+                sportsList.insertAdjacentHTML('beforeend', html);
+              });
+            })
+            .catch(function () {
+              clearTimeout(timeout);
+              proxyIndex++;
+              tryFetch();
+            });
+        }
+        tryFetch();
+      }
+    }
+    if (sportsTokenBtn) {
+      sportsTokenBtn.addEventListener('click', function () {
+        var msg = 'הרשם חינם ב-football-data.org וקבל API key. הדבק כאן:';
+        var current = '';
+        try { current = localStorage.getItem(STORAGE_FOOTBALL_API_TOKEN) || ''; } catch (e) {}
+        var key = window.prompt(msg, current);
+        if (key != null) {
+          key = (key || '').trim();
+          try { localStorage.setItem(STORAGE_FOOTBALL_API_TOKEN, key); } catch (e) {}
+          fetchSports();
+        }
+      });
     }
     function goToPrevDay() {
       var d = new Date(sportsViewDate + 'T12:00:00');
