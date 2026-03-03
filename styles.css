@@ -523,6 +523,8 @@ body.page-loaded {
 }
 
 .sports-panel__error[hidden] { display: none; }
+.sports-panel__error a { color: var(--accent); text-decoration: none; }
+.sports-panel__error a:hover { text-decoration: underline; }
 
 /* ========== LAYOUT ========== */
 .page-wrapper {

@@ -530,7 +530,7 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט: דפדוף בין ימים, רק כדורגל וכדורסל + ערוץ (TheSportsDB eventstv) ----------
+  // ---------- משחקי ספורט: דפדוף בין ימים, רק כדורגל וכדורסל (TheSportsDB eventsday – יותר משחקים) ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
@@ -573,7 +573,7 @@
     }
     function fetchSports(d) {
       if (!d) d = sportsViewDate;
-      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventstv.php?d=' + d;
+      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
@@ -592,7 +592,7 @@
             var data;
             try { data = JSON.parse(text); } catch (e) { proxyIndex++; tryFetch(); return; }
             if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
-            var raw = (data && data.tvevents) ? data.tvevents : [];
+            var raw = (data && data.events) ? data.events : [];
             var events = raw.filter(function (ev) {
               var sport = (ev.strSport || '').trim();
               return ALLOWED_SPORTS.indexOf(sport) !== -1;
@@ -604,13 +604,15 @@
             if (sportsError) sportsError.hidden = true;
             events.slice(0, 25).forEach(function (ev) {
               var sport = sportLabel((ev.strSport || '').trim());
-              var match = (ev.strEvent || '').trim();
+              var home = (ev.strHomeTeam || '').trim();
+              var away = (ev.strAwayTeam || '').trim();
+              var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away).trim();
               var time = (ev.strTime || '').trim();
               var channel = (ev.strChannel || '').trim();
               var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
               if (!match) return;
               var html = '<li class="sports-panel__item">';
-              html += '<span class="sports-panel__league">' + escapeHtml(sport) + '</span>';
+              html += '<span class="sports-panel__league">' + escapeHtml(ev.strLeague ? ev.strLeague : sport) + '</span>';
               html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
               if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
               if (channel) html += '<span class="sports-panel__channel">' + escapeHtml(channel) + '</span>';
