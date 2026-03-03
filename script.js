@@ -530,7 +530,7 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט: SportSRC (ללא API key, CORS) + fallback TheSportsDB ----------
+  // ---------- משחקי ספורט: SportSRC, סינון ליגות (כדורגל: אנגליה, ספרד, איטליה, גרמניה, ישראל | כדורסל: NBA, יורוליג, ישראל) ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
@@ -539,6 +539,28 @@
   var sportsNextBtn = $('sports-next-day');
   var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
   var ALLOWED_SPORTS = ['Soccer', 'Basketball'];
+  var FOOTBALL_LEAGUES = {
+    'Premier League': ['arsenal', 'chelsea', 'liverpool', 'manchester city', 'manchester united', 'tottenham', 'newcastle', 'aston villa', 'brighton', 'west ham', 'fulham', 'crystal palace', 'everton', 'bournemouth', 'nottingham forest', 'brentford', 'wolverhampton', 'ipswich', 'southampton', 'leicester'],
+    'La Liga': ['real madrid', 'barcelona', 'atletico', 'atlético', 'sevilla', 'real sociedad', 'athletic bilbao', 'villareal', 'real betis', 'valencia', 'getafe', 'girona', 'mallorca', 'osasuna', 'alavés', 'rayo vallecano', 'celta vigo', 'espanyol', 'cádiz', 'las palmas'],
+    'Serie A': ['juventus', 'inter', 'milan', 'napoli', 'roma', 'lazio', 'atalanta', 'fiorentina', 'bologna', 'torino', 'genoa', 'monza', 'lecce', 'udinese', 'cagliari', 'empoli', 'verona', 'sassuolo', 'salernitana', 'pescara', 'como', 'parma', 'cremonese'],
+    'Bundesliga': ['bayern', 'dortmund', 'leipzig', 'leverkusen', 'frankfurt', 'freiburg', 'wolfsburg', 'hoffenheim', 'stuttgart', 'werder bremen', 'heidenheim', 'augsburg', 'union berlin', 'gladbach', 'bochum', 'mainz', 'cologne', 'köln'],
+    'Israel Football': ['maccabi haifa', 'maccabi tel aviv', 'hapoel be\'er sheva', 'beitar jerusalem', 'hapoel tel aviv', 'hapoel haifa', 'bnei sakhnin', 'maccabi netanya', 'hapoel jerusalem', 'maccabi petah tikva', 'ashdod', 'hapoel hadera', 'hapoel kfar saba', 'maccabi bnei rehoboth', 'ironi kiryat shmona', 'hapoel beer sheva', 'beitar']
+  };
+  var BASKETBALL_LEAGUES = {
+    'NBA': ['celtics', 'knicks', 'nets', '76ers', 'sixers', 'raptors', 'cavaliers', 'bucks', 'pacers', 'bulls', 'pistons', 'heat', 'hawks', 'magic', 'hornets', 'wizards', 'nuggets', 'timberwolves', 'thunder', 'trail blazers', 'blazers', 'jazz', 'warriors', 'lakers', 'clippers', 'suns', 'kings', 'mavericks', 'rockets', 'grizzlies', 'pelicans', 'spurs'],
+    'EuroLeague': ['real madrid', 'barcelona', 'fenerbahce', 'panathinaikos', 'olympiacos', 'maccabi tel aviv', 'anadolu efes', 'armani milano', 'zalgiris', 'baskonia', 'valencia', 'monaco', 'bayern', 'partizan', 'crvena zvezda', 'red star', 'virtus bologna', 'olympiacos', 'cska', 'zenit', 'alba berlin', 'asvel', 'fenerbahçe'],
+    'Israel Basketball': ['maccabi tel aviv', 'hapoel jerusalem', 'hapoel tel aviv', 'hapoel holon', 'maccabi haifa', 'bnei herzliya', 'hapoel eilat', 'maccabi rishon', 'hapoel galil', 'nahariya', 'hapoel beer sheva', 'maccabi ashdod']
+  };
+  var LEAGUE_DISPLAY = {
+    'Premier League': 'פרמייר ליג',
+    'La Liga': 'לה ליגה',
+    'Serie A': 'סרייה א\'',
+    'Bundesliga': 'בונדסליגה',
+    'Israel Football': 'ליגת ישראל',
+    'NBA': 'NBA',
+    'EuroLeague': 'יורוליג',
+    'Israel Basketball': 'ליגה ישראלית'
+  };
   if (sportsList) {
     function todayIsrael() {
       return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
@@ -565,16 +587,33 @@
       if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
       sportsList.innerHTML = '';
     }
-    function leagueLabel(cat) {
-      if (cat === 'football') return 'כדורגל';
-      if (cat === 'basketball') return 'כדורסל';
-      return cat || '';
+    function teamInLeague(teamName, keys) {
+      var t = (teamName || '').toLowerCase();
+      return keys.some(function (key) { return t.indexOf(key) !== -1; });
+    }
+    function getMatchLeague(m) {
+      var cat = (m.category || '').toLowerCase();
+      var home = (m.teams && m.teams.home && m.teams.home.name) ? m.teams.home.name : '';
+      var away = (m.teams && m.teams.away && m.teams.away.name) ? m.teams.away.name : '';
+      if (cat === 'football') {
+        for (var leagueKey in FOOTBALL_LEAGUES) {
+          if (teamInLeague(home, FOOTBALL_LEAGUES[leagueKey]) && teamInLeague(away, FOOTBALL_LEAGUES[leagueKey])) return leagueKey;
+        }
+        return null;
+      }
+      if (cat === 'basketball') {
+        for (var leagueKey in BASKETBALL_LEAGUES) {
+          if (teamInLeague(home, BASKETBALL_LEAGUES[leagueKey]) && teamInLeague(away, BASKETBALL_LEAGUES[leagueKey])) return leagueKey;
+        }
+        return null;
+      }
+      return null;
     }
     function renderSportSRCMatches(matches, viewDate) {
       if (sportsLoading) sportsLoading.hidden = true;
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      (matches || []).slice(0, 35).forEach(function (m) {
+      (matches || []).slice(0, 40).forEach(function (m) {
         var home = (m.teams && m.teams.home && m.teams.home.name) ? m.teams.home.name : '';
         var away = (m.teams && m.teams.away && m.teams.away.name) ? m.teams.away.name : '';
         var match = home && away ? home + ' – ' + away : (m.title || '').trim();
@@ -584,7 +623,8 @@
           var dt = new Date(m.date);
           timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         }
-        var league = leagueLabel((m.category || '').toLowerCase());
+        var leagueKey = m._leagueKey;
+        var league = leagueKey && LEAGUE_DISPLAY[leagueKey] ? LEAGUE_DISPLAY[leagueKey] : '';
         var html = '<li class="sports-panel__item">';
         html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
         html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
@@ -608,10 +648,18 @@
           if (res && res.success && Array.isArray(res.data)) all = all.concat(res.data);
         });
         var viewDate = d;
-        var filtered = all.filter(function (m) {
+        var byDate = all.filter(function (m) {
           if (!m.date) return false;
           var matchDate = new Date(m.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
           return matchDate === viewDate;
+        });
+        var filtered = [];
+        byDate.forEach(function (m) {
+          var leagueKey = getMatchLeague(m);
+          if (leagueKey) {
+            m._leagueKey = leagueKey;
+            filtered.push(m);
+          }
         });
         filtered.sort(function (a, b) { return (a.date || 0) - (b.date || 0); });
         if (filtered.length > 0) {
