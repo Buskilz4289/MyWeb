@@ -390,15 +390,24 @@ body.page-loaded {
 .widget-weather__day-name { font-weight: 500; }
 .widget-weather__day-temp { color: var(--accent); white-space: nowrap; }
 
+/* ========== NEWS COLUMN (חדשות + משחקי ספורט) ========== */
+.news-column {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
 /* ========== SPORTS PANEL ========== */
 .sports-panel {
-  max-width: 1400px;
-  margin: 0 auto 1.5rem;
-  padding: 1rem 1rem 0;
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
 }
 
 .sports-panel__head {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .sports-panel__title {
@@ -425,8 +434,8 @@ body.page-loaded {
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  padding: 0.85rem 1rem;
-  min-height: 3rem;
+  padding: 0.75rem;
+  min-height: 2.5rem;
 }
 
 .sports-panel__list {
@@ -463,6 +472,12 @@ body.page-loaded {
   white-space: nowrap;
 }
 
+.sports-panel__channel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .sports-panel__loading,
 .sports-panel__error {
   font-size: 0.9rem;
@@ -486,9 +501,10 @@ body.page-loaded {
 
 /* ========== NEWS PANEL ========== */
 .news-panel {
-  flex: 0 0 280px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   background: var(--glass);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -618,7 +634,8 @@ body.page-loaded {
 .news-panel__retry:hover { background: rgba(0,234,255,0.2); border-color: var(--accent); }
 
 @media (max-width: 900px) {
-  .news-panel { flex: 0 0 auto; max-height: 320px; order: -1; }
+  .news-column { flex: 0 0 auto; width: 100%; max-width: 100%; order: -1; }
+  .news-panel { max-height: 320px; }
   .news-panel.collapsed { max-height: 52px; }
 }
 

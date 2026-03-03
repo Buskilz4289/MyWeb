@@ -530,11 +530,12 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט היום (TheSportsDB דרך CORS proxy) + קישורים לספורט5, ONE, SPORT1 ----------
+  // ---------- משחקי ספורט היום: רק כדורגל וכדורסל + ערוץ שידור (TheSportsDB eventstv) ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
   var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
+  var ALLOWED_SPORTS = ['Soccer', 'Basketball'];
   if (sportsList) {
     function todayIsrael() {
       return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
@@ -544,9 +545,15 @@
       if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
       sportsList.innerHTML = '';
     }
+    function sportLabel(s) {
+      if (!s) return '';
+      if (s === 'Soccer' || s === 'Football') return 'כדורגל';
+      if (s === 'Basketball') return 'כדורסל';
+      return s;
+    }
     function fetchSports() {
       var d = todayIsrael();
-      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
+      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventstv.php?d=' + d;
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
@@ -565,24 +572,28 @@
             var data;
             try { data = JSON.parse(text); } catch (e) { proxyIndex++; tryFetch(); return; }
             if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
-            var events = (data && data.events) ? data.events : [];
+            var raw = (data && data.tvevents) ? data.tvevents : [];
+            var events = raw.filter(function (ev) {
+              var sport = (ev.strSport || '').trim();
+              return ALLOWED_SPORTS.indexOf(sport) !== -1;
+            });
             if (events.length === 0) {
               if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
               return;
             }
             if (sportsError) sportsError.hidden = true;
-            events.slice(0, 20).forEach(function (ev) {
-              var league = (ev.strLeague || '').trim();
-              var home = (ev.strHomeTeam || '').trim();
-              var away = (ev.strAwayTeam || '').trim();
+            events.slice(0, 25).forEach(function (ev) {
+              var sport = sportLabel((ev.strSport || '').trim());
+              var match = (ev.strEvent || '').trim();
               var time = (ev.strTime || '').trim();
-              if (!home && !away) return;
-              var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away);
+              var channel = (ev.strChannel || '').trim();
               var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
+              if (!match) return;
               var html = '<li class="sports-panel__item">';
-              if (league) html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
+              html += '<span class="sports-panel__league">' + escapeHtml(sport) + '</span>';
               html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
               if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+              if (channel) html += '<span class="sports-panel__channel">' + escapeHtml(channel) + '</span>';
               html += '</li>';
               sportsList.insertAdjacentHTML('beforeend', html);
             });
