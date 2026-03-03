@@ -361,7 +361,11 @@
 
   // ---------- News panel ----------
   var RSS_URL = 'https://news.google.com/rss?hl=he&gl=IL&ceid=IL:he';
-  var PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?'];
+  var PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?url=',
+    'https://thingproxy.freeboard.io/fetch/'
+  ];
   var REFRESH_MIN = 5;
 
   var newsList = $('news-list');
@@ -432,12 +436,19 @@
     var parser = new DOMParser();
     var doc = parser.parseFromString(text, 'text/xml');
     var items = doc.querySelectorAll('item');
+    if (!items.length) items = doc.querySelectorAll('entry');
     var out = [];
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
-      var title = it.querySelector('title');
-      var link = it.querySelector('link');
-      out.push({ title: title ? title.textContent : '', link: link ? link.textContent : '' });
+      var titleEl = it.querySelector('title');
+      var title = titleEl ? (titleEl.textContent || '').trim() : '';
+      var link = '';
+      var linkEl = it.querySelector('link');
+      if (linkEl) {
+        link = linkEl.getAttribute('href') || linkEl.textContent || '';
+      }
+      if (!title) continue;
+      out.push({ title: title, link: (link || '').trim() });
     }
     return out;
   }
@@ -470,18 +481,37 @@
     if (newsLoading) { newsLoading.hidden = false; newsLoading.style.display = ''; }
     if (newsError) newsError.hidden = true;
 
-    var proxy = PROXIES[0];
-    var url = proxy + encodeURIComponent(RSS_URL);
-    fetch(url).then(function (r) { return r.text(); })
-      .then(function (text) {
-        var items = parseRss(text);
-        if (items.length) renderNews(items);
-        else showNewsError();
-      })
-      .catch(showNewsError)
-      .then(function () {
+    var proxyIndex = 0;
+    function tryFetch() {
+      if (proxyIndex >= PROXIES.length) {
+        showNewsError();
         if (newsRefresh) newsRefresh.classList.remove('refreshing');
-      });
+        return;
+      }
+      var proxy = PROXIES[proxyIndex];
+      var url = proxy + encodeURIComponent(RSS_URL);
+      fetch(url)
+        .then(function (r) {
+          if (!r.ok) throw new Error('Proxy ' + proxyIndex);
+          return r.text();
+        })
+        .then(function (text) {
+          if (!text || text.length < 100) throw new Error('Empty response');
+          var items = parseRss(text);
+          if (items.length) {
+            renderNews(items);
+            if (newsRefresh) newsRefresh.classList.remove('refreshing');
+          } else {
+            proxyIndex++;
+            tryFetch();
+          }
+        })
+        .catch(function () {
+          proxyIndex++;
+          tryFetch();
+        });
+    }
+    tryFetch();
   }
 
   if (newsRetry) newsRetry.addEventListener('click', function () { fetchNews(true); });
