@@ -530,49 +530,70 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט היום (TheSportsDB) + קישורים לספורט5, ONE, SPORT1 ----------
+  // ---------- משחקי ספורט היום (TheSportsDB דרך CORS proxy) + קישורים לספורט5, ONE, SPORT1 ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
+  var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
   if (sportsList) {
     function todayIsrael() {
       return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
     }
+    function showSportsError() {
+      if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
+      if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+      sportsList.innerHTML = '';
+    }
     function fetchSports() {
       var d = todayIsrael();
-      var url = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
+      var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      fetch(url)
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
-          var events = (data && data.events) ? data.events : [];
-          if (events.length === 0) {
-            if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
-            return;
-          }
-          events.slice(0, 20).forEach(function (ev) {
-            var league = (ev.strLeague || '').trim();
-            var home = (ev.strHomeTeam || '').trim();
-            var away = (ev.strAwayTeam || '').trim();
-            var time = (ev.strTime || '').trim();
-            if (!home && !away) return;
-            var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away);
-            var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
-            var html = '<li class="sports-panel__item">';
-            if (league) html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
-            html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
-            if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
-            html += '</li>';
-            sportsList.insertAdjacentHTML('beforeend', html);
+      var proxyIndex = 0;
+      function tryFetch() {
+        if (proxyIndex >= SPORTS_PROXIES.length) {
+          showSportsError();
+          return;
+        }
+        var url = SPORTS_PROXIES[proxyIndex] + encodeURIComponent(apiUrl);
+        var controller = new AbortController();
+        var timeout = setTimeout(function () { controller.abort(); }, 12000);
+        fetch(url, { signal: controller.signal })
+          .then(function (r) { clearTimeout(timeout); return r.text(); })
+          .then(function (text) {
+            var data;
+            try { data = JSON.parse(text); } catch (e) { proxyIndex++; tryFetch(); return; }
+            if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
+            var events = (data && data.events) ? data.events : [];
+            if (events.length === 0) {
+              if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+              return;
+            }
+            if (sportsError) sportsError.hidden = true;
+            events.slice(0, 20).forEach(function (ev) {
+              var league = (ev.strLeague || '').trim();
+              var home = (ev.strHomeTeam || '').trim();
+              var away = (ev.strAwayTeam || '').trim();
+              var time = (ev.strTime || '').trim();
+              if (!home && !away) return;
+              var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away);
+              var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
+              var html = '<li class="sports-panel__item">';
+              if (league) html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
+              html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+              if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+              html += '</li>';
+              sportsList.insertAdjacentHTML('beforeend', html);
+            });
+          })
+          .catch(function () {
+            clearTimeout(timeout);
+            proxyIndex++;
+            tryFetch();
           });
-        })
-        .catch(function () {
-          if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
-          if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
-        });
+      }
+      tryFetch();
     }
     fetchSports();
     setInterval(fetchSports, 30 * 60 * 1000);
@@ -587,7 +608,8 @@
     eilat:      { name: 'אילת',        lat: 29.5577, lon: 34.9519 },
     netanya:    { name: 'נתניה',       lat: 32.3320, lon: 34.8594 },
     ashdod:     { name: 'אשדוד',      lat: 31.8044, lon: 34.6553 },
-    rishon:     { name: 'ראשון לציון', lat: 31.9640, lon: 34.8042 }
+    rishon:     { name: 'ראשון לציון', lat: 31.9640, lon: 34.8042 },
+    sderot:     { name: 'שדרות',      lat: 31.5250, lon: 34.5969 }
   };
   var weatherEl = $('weather-text');
   var weatherSelect = $('weather-location');

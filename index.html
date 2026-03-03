@@ -65,25 +65,15 @@
         <option value="netanya">נתניה</option>
         <option value="ashdod">אשדוד</option>
         <option value="rishon">ראשון לציון</option>
+        <option value="sderot">שדרות</option>
       </select>
       <div class="widget-weather__content" id="weather-text">טוען…</div>
     </div>
   </div>
 
-  <section class="sports-panel" aria-labelledby="sports-panel-title">
-    <div class="sports-panel__head">
-      <h2 class="sports-panel__title" id="sports-panel-title">⚽ משחקי ספורט היום</h2>
-      <p class="sports-panel__sources">מקור תחזית: TheSportsDB. לעדכונים ושידורים: <a href="https://www.sport5.co.il" target="_blank" rel="noopener noreferrer">ספורט5</a> · <a href="https://www.one.co.il" target="_blank" rel="noopener noreferrer">ONE</a> · <a href="https://www.sport1.de" target="_blank" rel="noopener noreferrer">SPORT1</a></p>
-    </div>
-    <div class="sports-panel__body">
-      <ul class="sports-panel__list" id="sports-list"></ul>
-      <p class="sports-panel__loading" id="sports-loading">טוען משחקים…</p>
-      <p class="sports-panel__error" id="sports-error" hidden>לא נמצאו משחקים להיום.</p>
-    </div>
-  </section>
-
   <div class="page-wrapper">
-    <aside class="news-panel">
+    <div class="news-column">
+      <aside class="news-panel">
       <div class="news-panel__head">
         <h2 class="news-panel__title">חדשות רצות</h2>
         <div class="news-panel__actions">
@@ -100,6 +90,19 @@
         <p class="news-panel__error" id="news-error" hidden>לא ניתן לטעון חדשות. <button type="button" class="news-panel__retry" id="news-retry">נסה שוב</button></p>
       </div>
     </aside>
+
+    <section class="sports-panel" aria-labelledby="sports-panel-title">
+      <div class="sports-panel__head">
+        <h2 class="sports-panel__title" id="sports-panel-title">⚽ משחקי ספורט היום</h2>
+        <p class="sports-panel__sources">מקור: TheSportsDB. לעדכונים: <a href="https://www.sport5.co.il" target="_blank" rel="noopener noreferrer">ספורט5</a> · <a href="https://www.one.co.il" target="_blank" rel="noopener noreferrer">ONE</a> · <a href="https://www.sport1.de" target="_blank" rel="noopener noreferrer">SPORT1</a></p>
+      </div>
+      <div class="sports-panel__body">
+        <ul class="sports-panel__list" id="sports-list"></ul>
+        <p class="sports-panel__loading" id="sports-loading">טוען משחקים…</p>
+        <p class="sports-panel__error" id="sports-error" hidden>לא נמצאו משחקים להיום.</p>
+      </div>
+    </section>
+    </div>
 
     <main class="main" id="categories-container">
       <section class="links-section" id="cat-news" data-category-id="news">
