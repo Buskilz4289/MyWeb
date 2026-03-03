@@ -410,6 +410,43 @@ body.page-loaded {
   margin-bottom: 0.5rem;
 }
 
+.sports-panel__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.sports-panel__nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.sports-panel__nav-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--accent);
+}
+
+.sports-panel__date {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 6em;
+  text-align: center;
+}
+
 .sports-panel__title {
   font-size: 1.1rem;
   font-weight: 600;

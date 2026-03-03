@@ -530,15 +530,35 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט היום: רק כדורגל וכדורסל + ערוץ שידור (TheSportsDB eventstv) ----------
+  // ---------- משחקי ספורט: דפדוף בין ימים, רק כדורגל וכדורסל + ערוץ (TheSportsDB eventstv) ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
+  var sportsDateLabel = $('sports-date-label');
+  var sportsPrevBtn = $('sports-prev-day');
+  var sportsNextBtn = $('sports-next-day');
   var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
   var ALLOWED_SPORTS = ['Soccer', 'Basketball'];
   if (sportsList) {
     function todayIsrael() {
       return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
+    }
+    var sportsViewDate = todayIsrael();
+    function formatSportsDateLabel(ymd) {
+      var today = todayIsrael();
+      if (ymd === today) return 'היום';
+      var t = new Date(today + 'T12:00:00');
+      var yesterday = new Date(t);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (yesterday.toLocaleDateString('en-CA') === ymd) return 'אתמול';
+      var tomorrow = new Date(t);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      if (tomorrow.toLocaleDateString('en-CA') === ymd) return 'מחר';
+      var d = new Date(ymd + 'T12:00:00');
+      return d.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+    function setSportsDateLabel() {
+      if (sportsDateLabel) sportsDateLabel.textContent = formatSportsDateLabel(sportsViewDate);
     }
     function showSportsError() {
       if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
@@ -551,8 +571,8 @@
       if (s === 'Basketball') return 'כדורסל';
       return s;
     }
-    function fetchSports() {
-      var d = todayIsrael();
+    function fetchSports(d) {
+      if (!d) d = sportsViewDate;
       var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventstv.php?d=' + d;
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
@@ -606,8 +626,25 @@
       }
       tryFetch();
     }
+    function goToPrevDay() {
+      var d = new Date(sportsViewDate + 'T12:00:00');
+      d.setDate(d.getDate() - 1);
+      sportsViewDate = d.toLocaleDateString('en-CA');
+      setSportsDateLabel();
+      fetchSports();
+    }
+    function goToNextDay() {
+      var d = new Date(sportsViewDate + 'T12:00:00');
+      d.setDate(d.getDate() + 1);
+      sportsViewDate = d.toLocaleDateString('en-CA');
+      setSportsDateLabel();
+      fetchSports();
+    }
+    setSportsDateLabel();
     fetchSports();
-    setInterval(fetchSports, 30 * 60 * 1000);
+    if (sportsPrevBtn) sportsPrevBtn.addEventListener('click', goToPrevDay);
+    if (sportsNextBtn) sportsNextBtn.addEventListener('click', goToNextDay);
+    setInterval(function () { fetchSports(); }, 30 * 60 * 1000);
   }
 
   // ---------- Weather: תחזית ל־6 ימים + בחירת מיקום ----------
