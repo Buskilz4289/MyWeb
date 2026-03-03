@@ -609,28 +609,73 @@
       }
       return null;
     }
+    var LEAGUE_ORDER = ['Premier League', 'La Liga', 'Serie A', 'Bundesliga', 'Israel Football', 'NBA', 'EuroLeague', 'Israel Basketball'];
+    var INITIAL_VISIBLE = 3;
+
     function renderSportSRCMatches(matches, viewDate) {
       if (sportsLoading) sportsLoading.hidden = true;
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      (matches || []).slice(0, 40).forEach(function (m) {
-        var home = (m.teams && m.teams.home && m.teams.home.name) ? m.teams.home.name : '';
-        var away = (m.teams && m.teams.away && m.teams.away.name) ? m.teams.away.name : '';
-        var match = home && away ? home + ' – ' + away : (m.title || '').trim();
-        if (!match) return;
-        var timeStr = '';
-        if (m.date) {
-          var dt = new Date(m.date);
-          timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      var grouped = {};
+      (matches || []).forEach(function (m) {
+        var k = m._leagueKey || 'Other';
+        if (!grouped[k]) grouped[k] = [];
+        grouped[k].push(m);
+      });
+      LEAGUE_ORDER.forEach(function (leagueKey) {
+        var list = grouped[leagueKey];
+        if (!list || list.length === 0) return;
+        var leagueName = LEAGUE_DISPLAY[leagueKey] || leagueKey;
+        var section = document.createElement('div');
+        section.className = 'sports-league is-open';
+        var hiddenCount = Math.max(0, list.length - INITIAL_VISIBLE);
+        var headHtml = '<button type="button" class="sports-league__head" aria-expanded="true">';
+        headHtml += '<span class="sports-league__expand" aria-hidden="true">▼</span>';
+        headHtml += '<span>' + escapeHtml(leagueName) + ' <span class="sports-league__count">(' + list.length + ')</span></span></button>';
+        var listHtml = '<ul class="sports-league__list">';
+        list.forEach(function (m, i) {
+          var home = (m.teams && m.teams.home && m.teams.home.name) ? m.teams.home.name : '';
+          var away = (m.teams && m.teams.away && m.teams.away.name) ? m.teams.away.name : '';
+          var match = home && away ? home + ' – ' + away : (m.title || '').trim();
+          if (!match) return;
+          var timeStr = '';
+          if (m.date) {
+            var dt = new Date(m.date);
+            timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+          }
+          var itemClass = 'sports-panel__item';
+          if (i >= INITIAL_VISIBLE) itemClass += ' sports-league__item--hidden';
+          listHtml += '<li class="' + itemClass + '">';
+          listHtml += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+          if (timeStr) listHtml += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+          listHtml += '</li>';
+        });
+        listHtml += '</ul>';
+        if (hiddenCount > 0) {
+          listHtml += '<button type="button" class="sports-league__toggle" data-league-toggle>הצג עוד ' + hiddenCount + ' משחקים</button>';
         }
-        var leagueKey = m._leagueKey;
-        var league = leagueKey && LEAGUE_DISPLAY[leagueKey] ? LEAGUE_DISPLAY[leagueKey] : '';
-        var html = '<li class="sports-panel__item">';
-        html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
-        html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
-        if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
-        html += '</li>';
-        sportsList.insertAdjacentHTML('beforeend', html);
+        section.innerHTML = headHtml + listHtml;
+        sportsList.appendChild(section);
+
+        var headBtn = section.querySelector('.sports-league__head');
+        var toggleBtn = section.querySelector('[data-league-toggle]');
+        if (headBtn) {
+          headBtn.addEventListener('click', function () {
+            section.classList.toggle('is-open');
+            headBtn.setAttribute('aria-expanded', section.classList.contains('is-open') ? 'true' : 'false');
+          });
+        }
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function () {
+            if (section.classList.contains('is-full')) {
+              section.classList.remove('is-full');
+              toggleBtn.textContent = 'הצג עוד ' + hiddenCount + ' משחקים';
+            } else {
+              section.classList.add('is-full');
+              toggleBtn.textContent = 'הצג פחות';
+            }
+          });
+        }
       });
     }
     function fetchSports(d) {
@@ -696,6 +741,7 @@
                 return;
               }
               if (sportsError) sportsError.hidden = true;
+              var listItems = '';
               events.slice(0, 25).forEach(function (ev) {
                 var home = (ev.strHomeTeam || '').trim();
                 var away = (ev.strAwayTeam || '').trim();
@@ -703,13 +749,17 @@
                 var time = (ev.strTime || '').trim();
                 var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
                 if (!match) return;
-                var html = '<li class="sports-panel__item">';
-                html += '<span class="sports-panel__league">' + escapeHtml(ev.strLeague || '') + '</span>';
-                html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
-                if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
-                html += '</li>';
-                sportsList.insertAdjacentHTML('beforeend', html);
+                listItems += '<li class="sports-panel__item">';
+                listItems += '<span class="sports-panel__league">' + escapeHtml(ev.strLeague || '') + '</span>';
+                listItems += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+                if (timeStr) listItems += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+                listItems += '</li>';
               });
+              var fallbackHtml = '<button type="button" class="sports-league__head" aria-expanded="true"><span class="sports-league__expand" aria-hidden="true">▼</span><span>משחקים <span class="sports-league__count">(' + events.length + ')</span></span></button><ul class="sports-league__list">' + listItems + '</ul>';
+              var fallbackSection = document.createElement('div');
+              fallbackSection.className = 'sports-league is-open';
+              fallbackSection.innerHTML = fallbackHtml;
+              sportsList.appendChild(fallbackSection);
             })
             .catch(function () {
               clearTimeout(timeout);
