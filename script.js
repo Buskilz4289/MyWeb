@@ -8,7 +8,6 @@
   var STORAGE_NOTES = 'dashboard-notes';
   var STORAGE_NOTES_COLLAPSED = 'dashboard-notes-collapsed';
   var STORAGE_WEATHER_LOCATION = 'dashboard-weather-location';
-  var STORAGE_FOOTBALL_API_TOKEN = 'dashboard-football-api-token';
 
   var DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
 
@@ -531,14 +530,13 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- משחקי ספורט: football-data.org (אנגליה, ספרד, איטליה, גרמניה, ישראל) + fallback TheSportsDB ----------
+  // ---------- משחקי ספורט: SportSRC (ללא API key, CORS) + fallback TheSportsDB ----------
   var sportsList = $('sports-list');
   var sportsLoading = $('sports-loading');
   var sportsError = $('sports-error');
   var sportsDateLabel = $('sports-date-label');
   var sportsPrevBtn = $('sports-prev-day');
   var sportsNextBtn = $('sports-next-day');
-  var sportsTokenBtn = $('sports-token-btn');
   var SPORTS_PROXIES = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?url='];
   var ALLOWED_SPORTS = ['Soccer', 'Basketball'];
   if (sportsList) {
@@ -567,23 +565,28 @@
       if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
       sportsList.innerHTML = '';
     }
-    function renderFootballDataMatches(matches) {
+    function leagueLabel(cat) {
+      if (cat === 'football') return 'כדורגל';
+      if (cat === 'basketball') return 'כדורסל';
+      return cat || '';
+    }
+    function renderSportSRCMatches(matches, viewDate) {
       if (sportsLoading) sportsLoading.hidden = true;
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      (matches || []).slice(0, 30).forEach(function (m) {
-        var comp = (m.competition && m.competition.name) ? m.competition.name : '';
-        var home = (m.homeTeam && m.homeTeam.name) ? m.homeTeam.name : '';
-        var away = (m.awayTeam && m.awayTeam.name) ? m.awayTeam.name : '';
-        var match = home && away ? home + ' – ' + away : '';
+      (matches || []).slice(0, 35).forEach(function (m) {
+        var home = (m.teams && m.teams.home && m.teams.home.name) ? m.teams.home.name : '';
+        var away = (m.teams && m.teams.away && m.teams.away.name) ? m.teams.away.name : '';
+        var match = home && away ? home + ' – ' + away : (m.title || '').trim();
         if (!match) return;
         var timeStr = '';
-        if (m.utcDate) {
-          var dt = new Date(m.utcDate);
+        if (m.date) {
+          var dt = new Date(m.date);
           timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         }
+        var league = leagueLabel((m.category || '').toLowerCase());
         var html = '<li class="sports-panel__item">';
-        html += '<span class="sports-panel__league">' + escapeHtml(comp) + '</span>';
+        html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
         html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
         if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
         html += '</li>';
@@ -595,23 +598,29 @@
       if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
       if (sportsError) sportsError.hidden = true;
       sportsList.innerHTML = '';
-      var token = '';
-      try { token = localStorage.getItem(STORAGE_FOOTBALL_API_TOKEN) || ''; } catch (e) {}
-      if (token) {
-        var fdUrl = 'https://api.football-data.org/v4/matches?dateFrom=' + d + '&dateTo=' + d;
-        fetch(fdUrl, { headers: { 'X-Auth-Token': token } })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            if (data.matches && data.matches.length > 0) {
-              renderFootballDataMatches(data.matches);
-              return;
-            }
-            tryTheSportsDB();
-          })
-          .catch(function () { tryTheSportsDB(); });
-      } else {
+      var base = 'https://api.sportsrc.org/';
+      Promise.all([
+        fetch(base + '?data=matches&category=football').then(function (r) { return r.json(); }),
+        fetch(base + '?data=matches&category=basketball').then(function (r) { return r.json(); })
+      ]).then(function (results) {
+        var all = [];
+        results.forEach(function (res) {
+          if (res && res.success && Array.isArray(res.data)) all = all.concat(res.data);
+        });
+        var viewDate = d;
+        var filtered = all.filter(function (m) {
+          if (!m.date) return false;
+          var matchDate = new Date(m.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
+          return matchDate === viewDate;
+        });
+        filtered.sort(function (a, b) { return (a.date || 0) - (b.date || 0); });
+        if (filtered.length > 0) {
+          renderSportSRCMatches(filtered, viewDate);
+          return;
+        }
         tryTheSportsDB();
-      }
+      }).catch(function () { tryTheSportsDB(); });
+
       function tryTheSportsDB() {
         var apiUrl = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
         var proxyIndex = 0;
@@ -662,19 +671,6 @@
         }
         tryFetch();
       }
-    }
-    if (sportsTokenBtn) {
-      sportsTokenBtn.addEventListener('click', function () {
-        var msg = 'הרשם חינם ב-football-data.org וקבל API key. הדבק כאן:';
-        var current = '';
-        try { current = localStorage.getItem(STORAGE_FOOTBALL_API_TOKEN) || ''; } catch (e) {}
-        var key = window.prompt(msg, current);
-        if (key != null) {
-          key = (key || '').trim();
-          try { localStorage.setItem(STORAGE_FOOTBALL_API_TOKEN, key); } catch (e) {}
-          fetchSports();
-        }
-      });
     }
     function goToPrevDay() {
       var d = new Date(sportsViewDate + 'T12:00:00');
