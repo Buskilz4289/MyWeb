@@ -7,6 +7,7 @@
   var STORAGE_NEWS_COLLAPSED = 'dashboard-news-collapsed';
   var STORAGE_NOTES = 'dashboard-notes';
   var STORAGE_NOTES_COLLAPSED = 'dashboard-notes-collapsed';
+  var STORAGE_WEATHER_LOCATION = 'dashboard-weather-location';
 
   var DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
 
@@ -577,36 +578,60 @@
     setInterval(fetchSports, 30 * 60 * 1000);
   }
 
-  // ---------- Weather: תחזית ל־5 ימים + מיקום ----------
-  var WEATHER_LAT = 32.0853;
-  var WEATHER_LON = 34.7818;
-  var WEATHER_LOCATION = 'תל אביב';
+  // ---------- Weather: תחזית ל־6 ימים + בחירת מיקום ----------
+  var WEATHER_CITIES = {
+    telaviv:    { name: 'תל אביב',     lat: 32.0853, lon: 34.7818 },
+    jerusalem:  { name: 'ירושלים',     lat: 31.7683, lon: 35.2137 },
+    haifa:      { name: 'חיפה',        lat: 32.7940, lon: 34.9896 },
+    beersheva:  { name: 'באר שבע',    lat: 31.2520, lon: 34.7915 },
+    eilat:      { name: 'אילת',        lat: 29.5577, lon: 34.9519 },
+    netanya:    { name: 'נתניה',       lat: 32.3320, lon: 34.8594 },
+    ashdod:     { name: 'אשדוד',      lat: 31.8044, lon: 34.6553 },
+    rishon:     { name: 'ראשון לציון', lat: 31.9640, lon: 34.8042 }
+  };
   var weatherEl = $('weather-text');
+  var weatherSelect = $('weather-location');
   if (weatherEl) {
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
-      '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia/Jerusalem&forecast_days=6';
-    fetch(url)
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.daily || !d.daily.time) { weatherEl.textContent = '—'; return; }
-        var times = d.daily.time;
-        var maxT = d.daily.temperature_2m_max || [];
-        var minT = d.daily.temperature_2m_min || [];
-        var locationLine = WEATHER_LOCATION + ' (' + WEATHER_LAT.toFixed(2) + '°N, ' + WEATHER_LON.toFixed(2) + '°E)';
-        var html = '<p class="widget-weather__location">' + locationLine + '</p><ul class="widget-weather__days">';
-        for (var i = 0; i < times.length; i++) {
-          var date = new Date(times[i] + 'T12:00:00');
-          var dayName = date.toLocaleDateString('he-IL', { weekday: 'short' });
-          if (i === 0) dayName = 'היום';
-          else if (i === 1) dayName = 'מחר';
-          var max = maxT[i] != null ? Math.round(maxT[i]) : '—';
-          var min = minT[i] != null ? Math.round(minT[i]) : '—';
-          html += '<li class="widget-weather__day"><span class="widget-weather__day-name">' + dayName + '</span><span class="widget-weather__day-temp">' + max + '° / ' + min + '°</span></li>';
-        }
-        html += '</ul>';
-        weatherEl.innerHTML = html;
-      })
-      .catch(function () { weatherEl.textContent = '—'; });
+    function getWeatherLocation() {
+      var key = (weatherSelect && weatherSelect.value) || localStorage.getItem(STORAGE_WEATHER_LOCATION) || 'telaviv';
+      return WEATHER_CITIES[key] || WEATHER_CITIES.telaviv;
+    }
+    function fetchWeather() {
+      var loc = getWeatherLocation();
+      if (weatherSelect) try { localStorage.setItem(STORAGE_WEATHER_LOCATION, weatherSelect.value); } catch (e) {}
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
+        '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia/Jerusalem&forecast_days=6';
+      fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.daily || !d.daily.time) { weatherEl.textContent = '—'; return; }
+          var times = d.daily.time;
+          var maxT = d.daily.temperature_2m_max || [];
+          var minT = d.daily.temperature_2m_min || [];
+          var locationLine = loc.name + ' (' + loc.lat.toFixed(2) + '°N, ' + loc.lon.toFixed(2) + '°E)';
+          var html = '<p class="widget-weather__location">' + locationLine + '</p><ul class="widget-weather__days">';
+          for (var i = 0; i < times.length; i++) {
+            var date = new Date(times[i] + 'T12:00:00');
+            var dayName = date.toLocaleDateString('he-IL', { weekday: 'short' });
+            if (i === 0) dayName = 'היום';
+            else if (i === 1) dayName = 'מחר';
+            var max = maxT[i] != null ? Math.round(maxT[i]) : '—';
+            var min = minT[i] != null ? Math.round(minT[i]) : '—';
+            html += '<li class="widget-weather__day"><span class="widget-weather__day-name">' + dayName + '</span><span class="widget-weather__day-temp">' + max + '° / ' + min + '°</span></li>';
+          }
+          html += '</ul>';
+          weatherEl.innerHTML = html;
+        })
+        .catch(function () { weatherEl.textContent = '—'; });
+    }
+    if (weatherSelect) {
+      try {
+        var saved = localStorage.getItem(STORAGE_WEATHER_LOCATION);
+        if (saved && WEATHER_CITIES[saved]) weatherSelect.value = saved;
+      } catch (e) {}
+      weatherSelect.addEventListener('change', fetchWeather);
+    }
+    fetchWeather();
   }
 
   // ---------- רקע דינמי: תמונות נופים (לפי שעה + רוטציה) ----------

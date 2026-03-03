@@ -35,10 +35,12 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'Heebo', 'Inter', 'Rubik', system-ui, sans-serif;
   background: var(--bg-dark);
   color: var(--text);
@@ -49,6 +51,7 @@ body {
   transition: opacity 0.4s ease, transform 0.4s ease;
   direction: rtl;
   position: relative;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
 }
 
 .bg-image {
@@ -349,6 +352,24 @@ body.page-loaded {
 }
 
 .widget-quote__text { font-size: 0.95rem; color: var(--text); line-height: 1.5; margin: 0; font-style: italic; }
+
+.widget-weather__select {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.widget-weather__select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
 .widget-weather__content { font-size: 0.9rem; color: var(--text); margin: 0; }
 .widget-weather__location {
@@ -937,8 +958,25 @@ body.edit-mode .link-card__delete { pointer-events: auto; }
 
 .modal__btn--submit:hover { filter: brightness(1.1); }
 
-/* ========== RESPONSIVE ========== */
+/* ========== RESPONSIVE / MOBILE ========== */
 @media (max-width: 640px) {
   .header__meta { width: 100%; justify-content: center; }
   .header__datetime { align-items: center; }
+  .header { padding: 1rem 0.75rem; }
+  .search-wrap { max-width: 100%; padding: 0 0.5rem; }
+  .widgets-bar { flex-direction: column; padding: 0 0.75rem; gap: 1rem; }
+  .widget { min-width: 0; }
+  .sports-panel { padding: 0.75rem; }
+  .sports-panel__body { padding: 0.65rem; }
+  .page-wrapper { padding: 0 0.75rem 2rem; gap: 1rem; }
+  .news-panel, .notes-panel { max-width: 100%; }
+  .link-card__link { padding: 1rem 1.25rem; min-height: 48px; }
+  .nav-toggle, .theme-toggle, .edit-toggle { min-width: 44px; min-height: 44px; }
+  .modal__box { margin: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+}
+
+@media (max-width: 480px) {
+  html { font-size: 15px; }
+  .header__title { font-size: 1.35rem; }
+  .link-card__link { padding: 0.9rem 1rem; }
 }

@@ -2,7 +2,9 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Buskilz Site</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +56,16 @@
     </div>
     <div class="widget widget--weather">
       <span class="widget__label">מזג אוויר</span>
+      <select class="widget-weather__select" id="weather-location" aria-label="בחירת מיקום">
+        <option value="telaviv">תל אביב</option>
+        <option value="jerusalem">ירושלים</option>
+        <option value="haifa">חיפה</option>
+        <option value="beersheva">באר שבע</option>
+        <option value="eilat">אילת</option>
+        <option value="netanya">נתניה</option>
+        <option value="ashdod">אשדוד</option>
+        <option value="rishon">ראשון לציון</option>
+      </select>
       <div class="widget-weather__content" id="weather-text">טוען…</div>
     </div>
   </div>
