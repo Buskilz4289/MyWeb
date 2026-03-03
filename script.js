@@ -529,14 +529,82 @@
   var quoteEl = $('quote-text');
   if (quoteEl) quoteEl.textContent = quotes[new Date().getDate() % quotes.length];
 
-  // ---------- Weather ----------
+  // ---------- משחקי ספורט היום (TheSportsDB) + קישורים לספורט5, ONE, SPORT1 ----------
+  var sportsList = $('sports-list');
+  var sportsLoading = $('sports-loading');
+  var sportsError = $('sports-error');
+  if (sportsList) {
+    function todayIsrael() {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
+    }
+    function fetchSports() {
+      var d = todayIsrael();
+      var url = 'https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=' + d;
+      if (sportsLoading) { sportsLoading.hidden = false; sportsLoading.style.display = ''; }
+      if (sportsError) sportsError.hidden = true;
+      sportsList.innerHTML = '';
+      fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
+          var events = (data && data.events) ? data.events : [];
+          if (events.length === 0) {
+            if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+            return;
+          }
+          events.slice(0, 20).forEach(function (ev) {
+            var league = (ev.strLeague || '').trim();
+            var home = (ev.strHomeTeam || '').trim();
+            var away = (ev.strAwayTeam || '').trim();
+            var time = (ev.strTime || '').trim();
+            if (!home && !away) return;
+            var match = home && away ? home + ' – ' + away : (ev.strEvent || home || away);
+            var timeStr = time ? time.replace(/^(\d{2}):(\d{2}).*/, '$1:$2') : '';
+            var html = '<li class="sports-panel__item">';
+            if (league) html += '<span class="sports-panel__league">' + escapeHtml(league) + '</span>';
+            html += '<span class="sports-panel__match">' + escapeHtml(match) + '</span>';
+            if (timeStr) html += '<span class="sports-panel__time">' + escapeHtml(timeStr) + '</span>';
+            html += '</li>';
+            sportsList.insertAdjacentHTML('beforeend', html);
+          });
+        })
+        .catch(function () {
+          if (sportsLoading) { sportsLoading.hidden = true; sportsLoading.style.display = 'none'; }
+          if (sportsError) { sportsError.hidden = false; sportsError.style.display = ''; }
+        });
+    }
+    fetchSports();
+    setInterval(fetchSports, 30 * 60 * 1000);
+  }
+
+  // ---------- Weather: תחזית ל־5 ימים + מיקום ----------
+  var WEATHER_LAT = 32.0853;
+  var WEATHER_LON = 34.7818;
+  var WEATHER_LOCATION = 'תל אביב';
   var weatherEl = $('weather-text');
   if (weatherEl) {
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=32.0853&longitude=34.7818&current=temperature_2m,weather_code&timezone=Asia/Jerusalem')
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
+      '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia/Jerusalem&forecast_days=6';
+    fetch(url)
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (d && d.current) weatherEl.textContent = Math.round(d.current.temperature_2m) + '°C';
-        else weatherEl.textContent = '—';
+        if (!d || !d.daily || !d.daily.time) { weatherEl.textContent = '—'; return; }
+        var times = d.daily.time;
+        var maxT = d.daily.temperature_2m_max || [];
+        var minT = d.daily.temperature_2m_min || [];
+        var locationLine = WEATHER_LOCATION + ' (' + WEATHER_LAT.toFixed(2) + '°N, ' + WEATHER_LON.toFixed(2) + '°E)';
+        var html = '<p class="widget-weather__location">' + locationLine + '</p><ul class="widget-weather__days">';
+        for (var i = 0; i < times.length; i++) {
+          var date = new Date(times[i] + 'T12:00:00');
+          var dayName = date.toLocaleDateString('he-IL', { weekday: 'short' });
+          if (i === 0) dayName = 'היום';
+          else if (i === 1) dayName = 'מחר';
+          var max = maxT[i] != null ? Math.round(maxT[i]) : '—';
+          var min = minT[i] != null ? Math.round(minT[i]) : '—';
+          html += '<li class="widget-weather__day"><span class="widget-weather__day-name">' + dayName + '</span><span class="widget-weather__day-temp">' + max + '° / ' + min + '°</span></li>';
+        }
+        html += '</ul>';
+        weatherEl.innerHTML = html;
       })
       .catch(function () { weatherEl.textContent = '—'; });
   }

@@ -349,7 +349,107 @@ body.page-loaded {
 }
 
 .widget-quote__text { font-size: 0.95rem; color: var(--text); line-height: 1.5; margin: 0; font-style: italic; }
-.widget-weather__text { font-size: 0.95rem; color: var(--text); margin: 0; }
+
+.widget-weather__content { font-size: 0.9rem; color: var(--text); margin: 0; }
+.widget-weather__location {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.widget-weather__days { list-style: none; margin: 0; padding: 0; }
+.widget-weather__day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--glass-border);
+  gap: 0.5rem;
+}
+.widget-weather__day:last-child { border-bottom: none; }
+.widget-weather__day-name { font-weight: 500; }
+.widget-weather__day-temp { color: var(--accent); white-space: nowrap; }
+
+/* ========== SPORTS PANEL ========== */
+.sports-panel {
+  max-width: 1400px;
+  margin: 0 auto 1.5rem;
+  padding: 1rem 1rem 0;
+}
+
+.sports-panel__head {
+  margin-bottom: 0.75rem;
+}
+
+.sports-panel__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.25rem;
+}
+
+.sports-panel__sources {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.sports-panel__sources a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sports-panel__sources a:hover { text-decoration: underline; }
+
+.sports-panel__body {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  min-height: 3rem;
+}
+
+.sports-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sports-panel__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.9rem;
+}
+
+.sports-panel__item:last-child { border-bottom: none; }
+
+.sports-panel__league {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex: 0 0 100%;
+}
+
+.sports-panel__match {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.sports-panel__time {
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.sports-panel__loading,
+.sports-panel__error {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.sports-panel__error[hidden] { display: none; }
 
 /* ========== LAYOUT ========== */
 .page-wrapper {

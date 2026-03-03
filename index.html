@@ -54,9 +54,21 @@
     </div>
     <div class="widget widget--weather">
       <span class="widget__label">מזג אוויר</span>
-      <p class="widget-weather__text" id="weather-text">טוען…</p>
+      <div class="widget-weather__content" id="weather-text">טוען…</div>
     </div>
   </div>
+
+  <section class="sports-panel" aria-labelledby="sports-panel-title">
+    <div class="sports-panel__head">
+      <h2 class="sports-panel__title" id="sports-panel-title">⚽ משחקי ספורט היום</h2>
+      <p class="sports-panel__sources">מקור תחזית: TheSportsDB. לעדכונים ושידורים: <a href="https://www.sport5.co.il" target="_blank" rel="noopener noreferrer">ספורט5</a> · <a href="https://www.one.co.il" target="_blank" rel="noopener noreferrer">ONE</a> · <a href="https://www.sport1.de" target="_blank" rel="noopener noreferrer">SPORT1</a></p>
+    </div>
+    <div class="sports-panel__body">
+      <ul class="sports-panel__list" id="sports-list"></ul>
+      <p class="sports-panel__loading" id="sports-loading">טוען משחקים…</p>
+      <p class="sports-panel__error" id="sports-error" hidden>לא נמצאו משחקים להיום.</p>
+    </div>
+  </section>
 
   <div class="page-wrapper">
     <aside class="news-panel">
